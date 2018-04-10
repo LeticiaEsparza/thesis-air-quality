@@ -1,6 +1,13 @@
 view: pressure_hourly_summary {
   sql_table_name: epa_historical_air_quality.pressure_hourly_summary ;;
 
+  dimension: key {
+    primary_key: yes
+    hidden: yes
+    type: string
+    sql: CONCAT(${state_code},${county_code},${site_num},CAST(${date_gmt_date} AS string),${time_gmt},CAST(${poc} AS string)) ;;
+  }
+
   dimension: county_code {
     type: string
     sql: ${TABLE}.county_code ;;
@@ -16,14 +23,17 @@ view: pressure_hourly_summary {
     timeframes: [
       raw,
       date,
+      time,
+      year,
       week,
       month,
       quarter,
-      year
+      month_num,
+      month_name
     ]
     convert_tz: no
     datatype: date
-    sql: ${TABLE}.date_gmt ;;
+    sql: CAST(${TABLE}.date_gmt AS timestamp);;
   }
 
   dimension_group: date_local {
@@ -116,6 +126,13 @@ view: pressure_hourly_summary {
     sql: ${TABLE}.sample_measurement ;;
   }
 
+  dimension: sample_tier{
+    type: tier
+    tiers: [400,600,700,750,800,850,900,950,1000,1100]
+    style: integer
+    sql: ${sample_measurement} ;;
+  }
+
   dimension: site_num {
     type: string
     sql: ${TABLE}.site_num ;;
@@ -150,6 +167,61 @@ view: pressure_hourly_summary {
     type: string
     sql: ${TABLE}.units_of_measure ;;
   }
+
+
+  #measures for sample measurement
+  measure: avg_sample_measurement {
+    type: average
+    sql: ${TABLE}.sample_measurement ;;
+    value_format: "0.##"
+  }
+
+  measure: sum_sample_measurement{
+    type: sum
+    sql: ${TABLE}.sample_measurement ;;
+  }
+
+  # returns the midpoint value for the values in a given field
+  measure: median_sample_measurement{
+    type: median
+    sql: ${TABLE}.sample_measurement ;;
+  }
+
+  measure: max_sample_measurement{
+    type: max
+    sql: ${TABLE}.sample_measurement ;;
+  }
+
+  measure: min_sample_measurement{
+    type: min
+    sql: ${TABLE}.sample_measurement ;;
+  }
+
+  measure: sample_measurement_25_percentile{
+    type: percentile
+    percentile: 25
+    sql: ${TABLE}.sample_measurement ;;
+  }
+
+  measure: sample_measurement_50_percentile{
+    type: percentile
+    percentile: 50
+    sql: ${TABLE}.sample_measurement ;;
+  }
+
+  measure: sample_measurement_75_percentile{
+    type: percentile
+    percentile: 75
+    sql: ${TABLE}.sample_measurement ;;
+  }
+
+  measure: sample_measurement_90_percentile{
+    type: percentile
+    percentile: 90
+    sql: ${TABLE}.sample_measurement ;;
+  }
+
+  # measures end
 
   measure: count {
     type: count
